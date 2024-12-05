@@ -30,12 +30,16 @@
     src: conf-available/
     dest: /etc/apache2/conf-available/
 
-- name: Add HSTS in security.conf
+- name: Add security headers in security.conf
   ansible.builtin.lineinfile:
     path: /etc/apache2/conf-available/security.conf
     insertafter: EOF
     line: |
       Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+      Header set X-Frame-Options "sameorigin"
+      Header set X-Content-Type-Options "nosniff"
+      Header set X-XSS-Protection "1; mode=block"
+      Header always set Referrer-Policy "strict-origin-when-cross-origin"
     state: present
 
 - name: Enable conf
