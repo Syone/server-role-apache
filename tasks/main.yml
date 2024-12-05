@@ -69,10 +69,16 @@
   notify:
     - Restart Apache
 
+- name: Check if vhosts directory exist
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/files/apache/sites-available/"
+  register: vhosts_dir
+
 - name: Copy vhosts
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/files/apache/sites-available/"
     dest: /etc/apache2/sites-available/
+  when: vhosts_dir.stat.exists
 
 - name: Create www directories
   ansible.builtin.file:
@@ -81,8 +87,10 @@
     owner: www-data
     group: www-data
   loop: "{{ apache_sites }}"
+  when: apache_sites is defined and apache_sites | length > 0
 
 - name: Enable sites
   ansible.builtin.command: a2ensite {{ item.domain }}.conf
   loop: "{{ apache_sites }}"
+  when: apache_sites is defined and apache_sites | length > 0
   notify: Reload Apache
