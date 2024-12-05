@@ -1,0 +1,88 @@
+---
+- name: Install Apache and PHP
+  ansible.builtin.apt:
+    pkg:
+      - apache2
+      - libapache2-mod-fcgid
+      - php
+      - php-curl
+      - php-mbstring
+    state: latest
+    update_cache: yes
+
+- name: Enable modules
+  community.general.apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - rewrite
+    - proxy
+    - proxy_fcgi
+    - ssl
+    - http2
+    - brotli
+    - headers
+  notify:
+    - Reload Apache
+
+- name: Copy conf
+  ansible.builtin.copy:
+    src: conf-available/
+    dest: /etc/apache2/conf-available/
+
+- name: Add HSTS in security.conf
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    insertafter: EOF
+    line: |
+      Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    state: present
+
+- name: Enable conf
+  ansible.builtin.command: a2enconf {{ item }}
+  loop:
+    - security
+    - brotli
+  notify:
+    - Restart Apache
+
+- name: Register PHP version
+  ansible.builtin.command: php -r "echo PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;"
+  register: php_version
+
+- name: Disable module PHP
+  community.general.apache2_module:
+    name: "php{{ php_version.stdout }}"
+    state: absent
+  notify:
+    - Restart Apache
+
+- name: Switch Apache MPM
+  community.general.apache2_module:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+    ignore_configcheck: true
+    force: true
+  loop:
+    - { name: mpm_prefork, state: absent }
+    - { name: mpm_event, state: present }
+  notify:
+    - Restart Apache
+
+- name: Copy vhosts
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/files/apache/sites-available/"
+    dest: /etc/apache2/sites-available/
+
+- name: Create www directories
+  ansible.builtin.file:
+    path: "{{ item.directory }}"
+    state: directory
+    owner: www-data
+    group: www-data
+  loop: "{{ apache_sites }}"
+
+- name: Enable sites
+  ansible.builtin.command: a2ensite {{ item.domain }}.conf
+  loop: "{{ apache_sites }}"
+  notify: Reload Apache
