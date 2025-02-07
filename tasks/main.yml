@@ -30,19 +30,68 @@
     src: conf-available/
     dest: /etc/apache2/conf-available/
 
-- name: Add security headers in security.conf
+- name: Add Strict-Transport-Security header in security.conf
   ansible.builtin.lineinfile:
     path: /etc/apache2/conf-available/security.conf
     insertafter: EOF
-    line: |
-      Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-      Header set X-Frame-Options "sameorigin"
-      Header set X-Content-Type-Options "nosniff"
-      Header set X-XSS-Protection "1; mode=block"
-      Header always set Referrer-Policy "strict-origin-when-cross-origin"
-      Header set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
-      Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; style-src-elem * 'unsafe-inline'; img-src * data:; object-src 'none'; frame-ancestors 'none'; base-uri 'self';"
-      Header unset Server
+    line: 'Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"'
+    regexp: '^(?!#)Header always set Strict-Transport-Security'
+    state: present
+
+- name: Add X-Frame-Options header in security.conf
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    insertafter: EOF
+    line: 'Header set X-Frame-Options "sameorigin"'
+    regexp: '^(?!#)Header set X-Frame-Options'
+    state: present
+
+- name: Add X-Content-Type-Options header in security.conf
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    insertafter: EOF
+    line: 'Header set X-Content-Type-Options "nosniff"'
+    regexp: '^(?!#)Header set X-Content-Type-Options'
+    state: present
+
+- name: Add X-XSS-Protection header in security.conf
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    insertafter: EOF
+    line: 'Header set X-XSS-Protection "1; mode=block"'
+    regexp: '^(?!#)Header set X-XSS-Protection'
+    state: present
+
+- name: Add Referrer-Policy header in security.conf
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    insertafter: EOF
+    line: 'Header always set Referrer-Policy "strict-origin-when-cross-origin"'
+    regexp: '^(?!#)Header always set Referrer-Policy'
+    state: present
+
+- name: Add Permissions-Policy header in security.conf
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    insertafter: EOF
+    line: 'Header set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"'
+    regexp: '^(?!#)Header set Permissions-Policy'
+    state: present
+
+- name: Add Content-Security-Policy header in security.conf
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    insertafter: EOF
+    line: 'Header always set Content-Security-Policy "default-src ''self''; script-src ''self''; style-src ''self'' ''unsafe-inline''; style-src-elem * ''unsafe-inline''; img-src * data:; object-src ''none''; frame-ancestors ''none''; base-uri ''self'';"'
+    regexp: '^(?!#)Header always set Content-Security-Policy'
+    state: present
+
+- name: Unset Server header in security.conf
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    insertafter: EOF
+    line: 'Header unset Server'
+    regexp: '^(?!#)Header unset Server'
     state: present
 
 - name: Add ServerTokens and ServerSignature directives
