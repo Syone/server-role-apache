@@ -139,6 +139,7 @@
   ansible.builtin.stat:
     path: "{{ playbook_dir }}/files/apache/sites-available/"
   register: vhosts_dir
+  delegate_to: localhost
 
 - name: Copy vhosts
   ansible.builtin.copy:
